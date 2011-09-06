@@ -3,6 +3,7 @@ import logging
 from gi.repository import GObject, Gtk, Gedit
 from project import DjangoProject
 from server import DjangoServer
+from output import OutputBox
 
 logging.basicConfig()
 LOG_LEVEL = logging.DEBUG
@@ -19,15 +20,29 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         GObject.Object.__init__(self)
         self._server = None
         
-    def _add_server_panel(self, cwd):
-        """ Adds a terminal panel to the bottom pane for development server. """
+        # TODO: move to configuration settings
+        self._admin_cmd = "django-admin" # django-admin.py on some systems
+        self._manage_cmd = "python manage.py"
+        
+    def _add_output_panel(self):
+        """ Adds a widget to the bottom pane for django command output. """
+        self._output = OutputBox()
+        panel = self.window.get_bottom_panel()
+        panel.add_item_with_stock_icon(self._output, "DjangoOutput", 
+                                       "Django Output", Gtk.STOCK_EXECUTE)
+        
+    def _add_server_panel(self, cwd=None):
+        """ Adds a VTE widget to the bottom pane for development server. """
         logger.debug("Adding server panel.")
         self._server = DjangoServer()
-        self._server.cwd = cwd
+        self._server.command = "%s runserver" % (self._manage_cmd)
+        if cwd:
+            self._server.cwd = cwd
         self._server.connect("server-started", self.on_server_started)
         self._server.connect("server-stopped", self.on_server_stopped)
         panel = self.window.get_bottom_panel()
-        panel.add_item_with_stock_icon(self._server, "DjangoServer", "Django Server", Gtk.STOCK_NETWORK)
+        panel.add_item_with_stock_icon(self._server, "DjangoServer", 
+                                       "Django Server", Gtk.STOCK_NETWORK)
         
     def _add_ui(self):
         """ Merge the 'Django' menu into the Gedit menubar. """
@@ -71,12 +86,15 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
     def do_activate(self):
         logger.debug("Activating plugin.")
         self._add_ui()
+        self._add_output_panel()
+        self._add_server_panel()
         # TEMPORARY
-        self.open_project("/home/micah/Documents/Quixotix/projects/quix.django.comments/demo")
+        #self.open_project("/home/micah/Documents/Quixotix/projects/quix.django.comments/demo")
 
     def do_deactivate(self):
         logger.debug("Deactivating plugin.")
         self._remove_ui()
+        self._remove_output_panel()
         self._remove_server_panel()
 
     def do_update_state(self):
@@ -93,6 +111,17 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         dialog.set_title("Error")
         dialog.run()
         dialog.destroy()
+    
+    def new_project(self, path, name):
+        """ Runs the 'startproject' Django command and opens the project. """ 
+        try:
+            command = "%s startproject %s" % (self._admin_cmd, name)
+            self._output.run(command, path)
+        except Exception as e:
+            self.error_dialog(str(e))
+            return
+        
+        self.open_project(os.path.join(path, name))
         
     def on_close_project_activate(self, action, data=None):
         pass
@@ -103,12 +132,14 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
                 self._server.stop()
             elif action.get_active() and not self._server.is_running():
                 self._server.start()
+                panel = self.window.get_bottom_panel()
+                panel.activate_item(self._server)
         except Exception as e:
             self.error_dialog(str(e))
             return
     
     def on_new_project_activate(self, action, data=None):
-        pass
+        self.new_project("/home/micah/tmp", "testproject")
         
     def on_open_project_activate(self, action, data=None):
         """ Prompt the user for the Django project directory. """
@@ -137,9 +168,19 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         except IOError as e:
             self.error_dialog("Could not open project: %s" % str(e))
             return
-        self._add_server_panel(self._project.get_path())
+        #self._add_server_panel(self._project.get_path())
+        self._server.cwd = self._project.get_path()
+        self._server.refresh_ui()
         self._project_actions.set_sensitive(True)
 
+    def _remove_output_panel(self):
+        """ Remove the output box from the bottom panel. """
+        logger.debug("Removing output panel.")
+        if self._output:
+            panel = self.window.get_bottom_panel()
+            panel.remove_item(self._output)
+            self._output = None
+        
     def _remove_server_panel(self):
         """ Stop and remove development server panel from the bottom panel. """
         if self._server:

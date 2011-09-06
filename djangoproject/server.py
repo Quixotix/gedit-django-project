@@ -34,7 +34,7 @@ class DjangoServer(Gtk.HBox):
     def __init__(self):
         Gtk.HBox.__init__(self, homogeneous=False, spacing=0)  
         self.command = "python manage.py runserver"
-        self.cwd = ''
+        self.cwd = None
         self._pid = None
         self._vte = Vte.Terminal()
         self._vte.set_size(self._vte.get_column_count(), 5)
@@ -53,7 +53,7 @@ class DjangoServer(Gtk.HBox):
         self.pack_start(box, False, False, 0)
         self._start_icon = Gtk.Image.new_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.BUTTON)
         self._stop_icon = Gtk.Image.new_from_stock(Gtk.STOCK_STOP, Gtk.IconSize.BUTTON)
-        self._update_button()
+        self.refresh_ui()
         self.show_all()
  
     def is_running(self):
@@ -71,7 +71,7 @@ class DjangoServer(Gtk.HBox):
     def on_child_exited(self, vte, data=None):
         pid = self._pid
         self._pid = None
-        self._update_button()
+        self.refresh_ui()
         self.emit("server-stopped", pid)
         logger.debug("Development server stopped (pid %s)" % pid)
     
@@ -86,7 +86,7 @@ class DjangoServer(Gtk.HBox):
                                                 GLib.SpawnFlags.SEARCH_PATH,
                                                 None, 
                                                 None)[1]  
-        self._update_button()                        
+        self.refresh_ui()                        
         self.emit("server-started", self._pid)
         logger.debug("Development server started (pid %s)" % self._pid)
         
@@ -94,11 +94,13 @@ class DjangoServer(Gtk.HBox):
         if self.is_running():
             os.kill(self._pid, signal.SIGKILL)
     
-    def _update_button(self):
+    def refresh_ui(self):
         if self.is_running():
             self._button.set_image(self._stop_icon)
             self._button.set_label("Stop")
         else:
             self._button.set_image(self._start_icon)
             self._button.set_label("Start")
+        
+        self._button.set_sensitive(bool(self.cwd))
             
