@@ -1,0 +1,18 @@
+<ui>
+<menubar name="MenuBar">
+  <placeholder name="ExtraMenu_1">
+    <menu name="DjangoMenu" action="Django">
+      <menuitem action="NewProject"/>
+      <menuitem action="OpenProject"/>
+      <menuitem action="CloseProject"/>
+      <separator/>
+      <!-- <menuitem action="NewApp"/> -->
+      <separator/>
+      <menu action="Manage">
+        <menuitem action="RunServer"/>
+        <!-- <menuitem action="SyncDb" always-show-image="true"/> -->
+      </menu>
+    </menu>
+  </placeholder>
+</menubar>
+</ui>
