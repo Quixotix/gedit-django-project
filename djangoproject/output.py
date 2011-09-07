@@ -19,6 +19,7 @@ class OutputBox(Gtk.HBox):
         Gtk.HBox.__init__(self, homogeneous=False, spacing=4) 
         # configurable options
         self.cwd = None
+        self._last_output = None
         scrolled = Gtk.ScrolledWindow()
         self._view = self._create_view()
         scrolled.add(self._view)
@@ -36,6 +37,9 @@ class OutputBox(Gtk.HBox):
         buff.create_tag('error', foreground='red')
         return view
     
+    def get_last_output(self):
+        return self._last_output
+        
     def set_font(self, font_name):
         font_desc = Pango.FontDescription(font_name)
         self._view.modify_font(font_desc)
@@ -57,6 +61,7 @@ class OutputBox(Gtk.HBox):
         output = process.communicate()
         if output[0]:
             self.insert(output[0])
+            self._last_output = output[0]
         if output[1]:
             self.insert(output[1], 'error')
         

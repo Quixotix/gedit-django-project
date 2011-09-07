@@ -1,4 +1,5 @@
 import os
+import imp
 
 class DjangoProject(object):
 
@@ -31,3 +32,10 @@ class DjangoProject(object):
         self._path = path
         self._settings = settings
         self._manage = manage
+    
+    def get_settings_filename(self):
+        return self._settings
+    
+    def get_manage_filename(self):
+        return self._manage
+        

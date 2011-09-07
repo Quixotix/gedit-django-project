@@ -9,14 +9,24 @@
       <menuitem action="NewApp"/>
       <separator/>
       <menu action="Manage">
-        <separator/>
-        <menuitem action="Cleanup"/>
-        <menuitem action="DiffSettings"/>
-        <menuitem action="Flush"/>
-        <menuitem action="InspectDb"/>
-        <menuitem action="SqlFlush"/>
         <menuitem action="SyncDb"/>
+        <menuitem action="Cleanup"/>
+        <menuitem action="Flush"/>
+        <separator/>
+        <menuitem action="DiffSettings"/>
+        <menuitem action="InspectDb"/>
         <menuitem action="Validate"/>
+        <separator/>
+        <menuitem action="DumpData"/>
+        <menuitem action="LoadData"/>
+        <separator/>
+        <menuitem action="Sql"/>
+        <menuitem action="SqlAll"/>
+        <menuitem action="SqlClear"/>
+        <menuitem action="SqlCustom"/>
+        <menuitem action="SqlFlush"/>
+        <menuitem action="SqlIndexes"/>
+        <menuitem action="SqlSequenceReset"/>
       </menu>
       <separator/>
       <menuitem action="ViewServerPanel"/>

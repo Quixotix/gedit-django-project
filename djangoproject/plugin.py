@@ -5,7 +5,7 @@ from project import DjangoProject
 from server import DjangoServer
 from output import OutputBox
 from shell import Shell
-
+from appselector import AppSelector
 
 logging.basicConfig()
 LOG_LEVEL = logging.DEBUG
@@ -127,7 +127,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
             ('Cleanup', None, "_Cleanup", None, 
                 "Clean out old data from the database.", 
                 self.on_manage_command_activate),
-            ('DiffSettings', None, "_Diff Settings", None, 
+            ('DiffSettings', None, "Di_ff Settings", None, 
                 "Displays differences between the current settings and Django's default settings.", 
                 self.on_manage_command_activate),
             ('InspectDb', None, "_Inspect Database", None, 
@@ -136,12 +136,37 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
             ('Flush', None, "_Flush", None, 
                 "Returns the database to the state it was in immediately after syncdb was executed.", 
                 self.on_manage_command_activate),
+                # all clear custom flush
+            ('Sql', None, "S_QL...", None, 
+                "Prints the CREATE TABLE SQL statements for the given app name(s).", 
+                self.on_manage_app_select_command_activate),
+            ('SqlAll', None, "SQL _All...", None, 
+                "Prints the CREATE TABLE and initial-data SQL statements for the given app name(s).", 
+                self.on_manage_app_select_command_activate),
+            ('SqlClear', None, "SQL C_lear...", None, 
+                "Prints the DROP TABLE SQL statements for the given app name(s).", 
+                self.on_manage_app_select_command_activate),
+            ('SqlCustom', None, "SQL C_ustom...", None, 
+                "Prints the custom SQL statements for the given app name(s).", 
+                self.on_manage_app_select_command_activate),
             ('SqlFlush', None, "S_QL Flush", None, 
                 "Prints the SQL statements that would be executed for the flush command.", 
                 self.on_manage_command_activate),
+            ('SqlIndexes', None, "SQL _Indexes...", None, 
+                "Prints the CREATE INDEX SQL statements for the given app name(s).", 
+                self.on_manage_app_select_command_activate),
+            ('SqlSequenceReset', None, "SQL Sequence Rese_t...", None, 
+                "Prints the SQL statements for resetting sequences for the given app name(s).", 
+                self.on_manage_app_select_command_activate),
             ('Validate', None, "_Validate", None, 
                 "Validates all installed models.", 
                 self.on_manage_command_activate),
+            ('LoadData', None, "_Load Data...", None, 
+                "Loads the contents of fixtures into the database.", 
+                self.on_manage_load_data_activate),
+            ('DumpData', None, "_Dump Data...", None, 
+                "Outputs all data in the database associated with the named application(s).", 
+                self.on_manage_app_select_command_activate),
         ])
         self._project_actions.add_toggle_actions([
             ('RunServer', None, "_Run Development Server", 
@@ -165,7 +190,23 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
             self._dbshell.kill()
         self._project_actions.set_sensitive(False)
         self._update_run_server_action()
+    
+    def confirmation_dialog(self, message):
+        """ Display a very basic informative Yes/No dialog. """
+        dialog = Gtk.MessageDialog(self.window,
+                                   Gtk.DialogFlags.MODAL | 
+                                   Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                   Gtk.MessageType.QUESTION, Gtk.ButtonsType.YES_NO,  
+                                   message)
+        dialog.set_title("Confirm")
+        response = dialog.run()
+        dialog.destroy()
         
+        if response == Gtk.ResponseType.YES: 
+            return True
+        else:
+            return False
+            
     def do_activate(self):
         logger.debug("Activating plugin.")
         self._add_ui()
@@ -256,10 +297,87 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
             return
         
         self.open_project(os.path.join(path, name))
-        
+    
+    def new_tab_from_output(self):
+        message = "Do you want to create a new document with the output?"
+        if not self.confirmation_dialog(message):
+            return
+        tab = self.window.create_tab(False)
+        buff = tab.get_view().get_buffer()
+        end_iter = buff.get_end_iter()
+        buff.insert(end_iter, self._output.get_last_output())
+        self.window.set_active_tab(tab)
+            
     def on_close_project_activate(self, action, data=None):
         self.close_project()
+   
+    def on_manage_command_activate(self, action, data=None):
+        """ Handles simple manage.py actions. """
+        command = action.get_name().lower()
+        if command in ('syncdb', 'flush'):
+            command += ' --noinput'
+        try:
+            self.run_management_command(command)
+        except:
+            pass # errors show up in output
+        
+        if command in ('inspectdb', 'sqlflush', 'diffsettings'):
+            self.new_tab_from_output()
+    
+    def on_manage_app_select_command_activate(self, action, data=None):
+        dialog = Gtk.Dialog("Select apps...",
+                            self.window,
+                            Gtk.DialogFlags.MODAL | 
+                            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, 
+                            Gtk.STOCK_OK, Gtk.ResponseType.OK))
+        dialog.set_default_size(300, 200)
+        selector = AppSelector()
+        selector.show_all()
+        try:
+            selector.load_from_settings(self._project.get_settings_filename())
+        except Exception as e:
+            self.error_dialog("Error getting app list: %s" % str(e))
+        box = dialog.get_content_area()
+        box.set_border_width(10)
+        box.pack_start(selector, True, True, 0)
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            files = selector.get_selected()
+            command = action.get_name().lower()
+            full_command = "%s %s" % (command, " ".join([f for f in files]) )
+            try:
+                self.run_management_command(full_command)
+            except Exception as e:
+                self.error_dialog(str(e))
+        dialog.destroy()
+        
+        # only after the dialog is destroyed do we prompt them for a new tab
+        if response == Gtk.ResponseType.OK:
+            if command[:3] == "sql" or command in ('dumpdata'):
+                self.new_tab_from_output()
+        
+    def on_manage_load_data_activate(self, action, data=None):
+        """ Prompt user for fixtures to load into database. """
+        dialog = Gtk.FileChooserDialog("Select fixtures...",
+                                       self.window,
+                                       Gtk.FileChooserAction.OPEN,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, 
+                                       Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+        dialog.set_select_multiple(True)
+        if self._project:
+            dialog.set_filename(self._project.get_path())
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            files = dialog.get_files()
+            command = "loaddata "+" ".join([f.get_path() for f in files]) 
+            try:
+                self.run_management_command(command)
+            except Exception as e:
+                self.error_dialog(str(e))
             
+        dialog.destroy()
+         
     def on_manage_runserver_activate(self, action, data=None):
         """ Run Django development server. """
         if not self._server:
@@ -272,16 +390,6 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         except Exception as e:
             self.error_dialog(str(e))
             return
-    
-    def on_manage_command_activate(self, action, data=None):
-        """ Handles simple manage.py actions. """
-        command = action.get_name().lower()
-        if command in ('syncdb', 'flush'):
-            command += ' --noinput'
-        try:
-            self.run_management_command(command)
-        except:
-            pass # error output often too large for error dialog
         
     def on_new_app_activate(self, action, data=None):
         """ Prompt user for new app name and directory """
@@ -348,7 +456,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         except IOError as e:
             self.error_dialog("Could not open project: %s" % str(e))
             return
-        
+
         self._output.cwd = self._project.get_path()
         self._setup_server_panel()
         self._setup_shell_panel()
@@ -432,3 +540,5 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
             self._project_actions.get_action("RunServer").set_sensitive(False)
         else:
             self._project_actions.get_action("RunServer").set_sensitive(True)
+  
+        
