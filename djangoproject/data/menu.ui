@@ -6,12 +6,24 @@
       <menuitem action="OpenProject"/>
       <menuitem action="CloseProject"/>
       <separator/>
-      <!-- <menuitem action="NewApp"/> -->
+      <menuitem action="NewApp"/>
       <separator/>
       <menu action="Manage">
-        <menuitem action="RunServer"/>
-        <!-- <menuitem action="SyncDb" always-show-image="true"/> -->
+        <separator/>
+        <menuitem action="Cleanup"/>
+        <menuitem action="DiffSettings"/>
+        <menuitem action="Flush"/>
+        <menuitem action="InspectDb"/>
+        <menuitem action="SqlFlush"/>
+        <menuitem action="SyncDb"/>
+        <menuitem action="Validate"/>
       </menu>
+      <separator/>
+      <menuitem action="ViewServerPanel"/>
+      <menuitem action="ViewPythonShell"/>
+      <menuitem action="ViewDbShell"/>
+      <separator/>
+      <menuitem action="RunServer"/>
     </menu>
   </placeholder>
 </menubar>

@@ -21,7 +21,7 @@ class DjangoServer(Gtk.HBox):
     the server may stop for any number of reasons, including errors in Django
     code, pressing <CTRL+C>, or the stop button on the widget.
     """
-    __gtype_name__ = "DjangoServer"
+    __gtype_name__ = "DjangoProjectServer"
     __gsignals__ = {
         "server-started": 
             (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, 
@@ -75,6 +75,9 @@ class DjangoServer(Gtk.HBox):
         self.emit("server-stopped", pid)
         logger.debug("Development server stopped (pid %s)" % pid)
     
+    def set_font(self, font_name):
+        self._vte.set_font_from_string(font_name)
+        
     def start(self):
         if self.is_running():
             return

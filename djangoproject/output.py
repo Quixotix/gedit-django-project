@@ -13,30 +13,32 @@ class OutputBox(Gtk.HBox):
     """
     A widget to display the output of running django commands.    
     """
-    __gtype_name__ = "OutputBox"
+    __gtype_name__ = "DjangoProjectOutputBox"
     
     def __init__(self):
         Gtk.HBox.__init__(self, homogeneous=False, spacing=4) 
         # configurable options
-        self.font = "monospace 9"
         self.cwd = None
         scrolled = Gtk.ScrolledWindow()
         self._view = self._create_view()
         scrolled.add(self._view)
         self.pack_start(scrolled, True, True, 0)
+        self.set_font("monospace 10")
         self.show_all()
     
     def _create_view(self):
         """ Create the gtk.TextView used for shell output """
         view = Gtk.TextView()
         view.set_editable(False)
-        font_desc = Pango.FontDescription(self.font)
-        view.modify_font(font_desc)
         buff = view.get_buffer()
-        buff.create_tag('bold', foreground='#4d4d4d', weight=Pango.Weight.BOLD)
-        buff.create_tag('info', foreground='#4d4d4d', style=Pango.Style.OBLIQUE)
+        buff.create_tag('bold', foreground='#7F7F7F', weight=Pango.Weight.BOLD)
+        buff.create_tag('info', foreground='#7F7F7F', style=Pango.Style.OBLIQUE)
         buff.create_tag('error', foreground='red')
         return view
+    
+    def set_font(self, font_name):
+        font_desc = Pango.FontDescription(font_name)
+        self._view.modify_font(font_desc)
         
     def run(self, command, cwd=None):
         """ Run a command inserting output into the gtk.TextView """
