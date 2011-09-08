@@ -258,7 +258,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
     def new_app(self, path, name):
         """ Runs the 'startapp' Django command. """ 
         try:
-            self.run_admin_command("startapp %s" % name)
+            self.run_admin_command("startapp %s" % name, path)
         except Exception as e:
             self.error_dialog(str(e))
             
@@ -291,7 +291,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
     def new_project(self, path, name):
         """ Runs the 'startproject' Django command and opens the project. """ 
         try:
-            self.run_admin_command("startproject %s" % name)
+            self.run_admin_command("startproject %s" % name, path)
         except Exception as e:
             self.error_dialog(str(e))
             return
@@ -523,11 +523,14 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         manager.remove_action_group(self._project_actions)
         manager.ensure_update()
     
-    def run_admin_command(self, command):
+    def run_admin_command(self, command, path):
         """ Run a django-admin.py command in the output panel. """
         self.window.get_bottom_panel().activate_item(self._output)
         full_command = "%s %s" % (self._admin_cmd, command)
+        original_cwd = self._output.cwd
+        self._output.cwd = path
         self._output.run(full_command)
+        self._output.cwd = original_cwd
             
     def run_management_command(self, command):
         """ Run a manage.py command in the output panel. """
