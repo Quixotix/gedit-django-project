@@ -5,7 +5,7 @@ import logging
 from gi.repository import GObject, Gtk, GLib, Pango
 
 logging.basicConfig()
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.ERROR
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 

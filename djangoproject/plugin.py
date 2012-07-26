@@ -8,7 +8,7 @@ from shell import Shell
 from appselector import AppSelector
 
 logging.basicConfig()
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.ERROR
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 SETTINGS_SCHEMA = "org.gnome.gedit.plugins.djangoproject"
@@ -29,8 +29,12 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         self._shell = None
         self._dbshell = None
         self._install_stock_icons()
-        # TODO: move to configuration settings
-        self._admin_cmd = "django-admin" # django-admin.py on some systems
+        # TODO: The admin and manage commands should configurable so that they
+        # could be changed to various virtual environments. Even better would
+        # be able to specify the commands on a per-project basis.        
+        #self._admin_cmd = "/home/micah/.virtual-environments/django-1.4/bin/django-admin.py" 
+        #self._manage_cmd = "/home/micah/.virtual-environments/django-1.4/bin/python manage.py"
+        self._admin_cmd = "django-admin.py" 
         self._manage_cmd = "python manage.py"
         self._font = "monospace 10"
     
@@ -523,7 +527,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         manager.remove_action_group(self._project_actions)
         manager.ensure_update()
     
-    def run_admin_command(self, command, path):
+    def run_admin_command(self, command, path=None):
         """ Run a django-admin.py command in the output panel. """
         self.window.get_bottom_panel().activate_item(self._output)
         full_command = "%s %s" % (self._admin_cmd, command)
