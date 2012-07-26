@@ -23,12 +23,20 @@ class DjangoProject(object):
         """
         if not os.path.exists(path):
             raise IOError("Django project directory does not exist: %s" % path)
-        settings = os.path.join(path, 'settings.py')
+        
+        # find manage.py
         manage = os.path.join(path, 'manage.py')
-        if not os.path.isfile(settings):
-            raise IOError("Django settings file does not exist: %s" % settings)
         if not os.path.isfile(manage):
             raise IOError("Django manage file does not exist: %s" % manage)
+
+        # find settings.py in Django >= 1.4
+        settings = os.path.join(path, os.path.basename(path), 'settings.py')
+        if not os.path.isfile(settings):
+            # find settings.py in Django < 1.4
+            settings = os.path.join(path, 'settings.py')
+            if not os.path.isfile(settings):
+                raise IOError("Django settings file does not exist: %s" % settings)
+
         self._path = path
         self._settings = settings
         self._manage = manage
