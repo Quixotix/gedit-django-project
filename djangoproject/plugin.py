@@ -29,11 +29,6 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         self._shell = None
         self._dbshell = None
         self._install_stock_icons()
-        # TODO: The admin and manage commands should configurable so that they
-        # could be changed to various virtual environments. Even better would
-        # be able to specify the commands on a per-project basis.        
-        #self._admin_cmd = "/home/micah/.virtual-environments/django-1.4/bin/django-admin.py" 
-        #self._manage_cmd = "/home/micah/.virtual-environments/django-1.4/bin/python manage.py"
         self._admin_cmd = "django-admin.py" 
         self._manage_cmd = "python manage.py"
         self._font = "monospace 10"
