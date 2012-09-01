@@ -5,7 +5,7 @@ IAge=3
 Name=Django Project
 Description=Manage Django projects from Gedit.
 Authors=Micah Carrick <micah@quixotix.com>
-Copyright=Copyright © 2011 Micah Carrick
+Copyright=Copyright © 2012 Micah Carrick
 Website=https://github.com/Quixotix/gedit-django-project
-Version=3.0.0
+Version=3.1.3
 

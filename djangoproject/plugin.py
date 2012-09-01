@@ -8,7 +8,7 @@ from shell import Shell
 from appselector import AppSelector
 
 logging.basicConfig()
-LOG_LEVEL = logging.ERROR
+LOG_LEVEL = logging.DEBUG
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
 SETTINGS_SCHEMA = "org.gnome.gedit.plugins.djangoproject"
@@ -47,6 +47,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         panel.add_item_with_stock_icon(self._dbshell, "DjangoDbShell", 
                                        "Database Shell", STOCK_DBSHELL)
         self._setup_dbshell_panel()
+        panel.activate_item(self._dbshell)
                                        
     def _add_output_panel(self):
         """ Adds a widget to the bottom pane for django command output. """
@@ -85,6 +86,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         panel.add_item_with_stock_icon(self._shell, "DjangoShell", 
                                        "Python Shell", STOCK_PYTHON)
         self._setup_shell_panel()
+        panel.activate_item(self._shell)
                                        
     def _add_ui(self):
         """ Merge the 'Django' menu into the Gedit menubar. """
@@ -428,6 +430,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
                 
     def on_server_stopped(self, server, pid, data=None):
         self._project_actions.get_action("RunServer").set_active(False)
+        panel.activate_item(self._server)
     
     def on_view_db_shell_panel_activate(self, action, data=None):
         """ Show/Hide database shell from main menu. """
