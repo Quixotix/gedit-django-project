@@ -11,7 +11,7 @@ logging.basicConfig()
 LOG_LEVEL = logging.DEBUG
 logger = logging.getLogger(__name__)
 logger.setLevel(LOG_LEVEL)
-SETTINGS_SCHEMA = "org.gnome.gedit.plugins.djangoproject"
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 STOCK_DBSHELL = "dbshell"
 STOCK_SERVER = "server"
@@ -236,13 +236,6 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         dialog.set_title("Error")
         dialog.run()
         dialog.destroy()
-    
-    def _has_settings_schema(self):
-        schemas = Gio.Settings.list_schemas()
-        if not SETTINGS_SCHEMA in schemas:
-            return False
-        else:
-            return True
     
     def _install_stock_icons(self):
         """ Register custom stock icons used on the tabs. """

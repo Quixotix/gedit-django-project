@@ -1,5 +1,12 @@
 import os
 import imp
+import sys
+import logging
+
+logging.basicConfig()
+LOG_LEVEL = logging.DEBUG
+logger = logging.getLogger(__name__)
+logger.setLevel(LOG_LEVEL)
 
 class DjangoProject(object):
 
