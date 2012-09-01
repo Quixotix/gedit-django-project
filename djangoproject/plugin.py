@@ -457,8 +457,9 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         
         # print version as it may have changed due to virtualenv
         try:
-            command = "%s --version" % (self._admin_cmd)
-            self._output.run(command)
+            #command = "%s --version" % (self._admin_cmd)
+            #self._output.run(command)
+            self.run_admin_command("--version" , path)
         except:
             pass
 
@@ -525,10 +526,20 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         """ Run a django-admin.py command in the output panel. """
         self.window.get_bottom_panel().activate_item(self._output)
         full_command = "%s %s" % (self._admin_cmd, command)
+        deb_command =  "%s %s" % (self._admin_cmd[0:-3], command)
         original_cwd = self._output.cwd
         self._output.cwd = path
-        self._output.run(full_command)
-        self._output.cwd = original_cwd
+        try:
+            self._output.run(full_command)
+        except OSError:
+            try: 
+                # try without ".py" for debian/ubuntu system installs
+                print(deb_command)
+                self._output.run(deb_command)
+            except:
+                raise Exception("Could not execute django-admin.py command.\nIs Django installed?")
+        finally:
+            self._output.cwd = original_cwd
             
     def run_management_command(self, command):
         """ Run a manage.py command in the output panel. """
