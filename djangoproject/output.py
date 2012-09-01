@@ -65,7 +65,7 @@ class OutputBox(Gtk.HBox):
         if output[1]:
             self.insert(output[1], 'error')
         
-        self.insert("Exit: ", 'info')
+        self.insert("\nExit: ", 'info')
         self.insert("%s\n\n" % process.returncode, 'bold')
         
         if output[1] and process.returncode <> 0:
