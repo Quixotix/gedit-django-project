@@ -51,11 +51,6 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         panel = self.window.get_bottom_panel()
         panel.add_item_with_stock_icon(self._output, "DjangoOutput", 
                                        "Django Output", Gtk.STOCK_EXECUTE)
-        try:
-            command = "%s --version" % (self._admin_cmd)
-            self._output.run(command)
-        except:
-            pass
         
     def _add_server_panel(self, cwd=None):
         """ Adds a VTE widget to the bottom pane for development server. """
@@ -329,7 +324,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         selector = AppSelector()
         selector.show_all()
         try:
-            selector.load_from_settings(self._project.get_settings_filename())
+            selector.load_from_settings(self._project.get_settings_module())
         except Exception as e:
             self.error_dialog("Error getting app list: %s" % str(e))
         box = dialog.get_content_area()
@@ -418,6 +413,7 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
                 
     def on_server_stopped(self, server, pid, data=None):
         self._project_actions.get_action("RunServer").set_active(False)
+        panel = self.window.get_bottom_panel()
         panel.activate_item(self._server)
     
     def on_view_db_shell_panel_activate(self, action, data=None):
@@ -458,6 +454,13 @@ class Plugin(GObject.Object, Gedit.WindowActivatable):
         self._setup_dbshell_panel()
         self._project_actions.set_sensitive(True)
         self._update_run_server_action()
+        
+        # print version as it may have changed due to virtualenv
+        try:
+            command = "%s --version" % (self._admin_cmd)
+            self._output.run(command)
+        except:
+            pass
 
     def _setup_dbshell_panel(self):
         if self._dbshell and self._project:

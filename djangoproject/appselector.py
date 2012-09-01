@@ -3,7 +3,7 @@ from gi.repository import GObject, Gtk
 
 class AppSelector(Gtk.VBox):
     __gtype_name__ = "DjangoProjectAppSelector"
-    def __init__(self, settings_file=None):
+    def __init__(self, settings_module=None):
         Gtk.VBox.__init__(self, homogeneous=False, spacing=0) 
         self._model = Gtk.ListStore(GObject.TYPE_INT, GObject.TYPE_STRING)
         treeview = Gtk.TreeView.new_with_model(self._model)
@@ -24,12 +24,11 @@ class AppSelector(Gtk.VBox):
         scrolled.set_shadow_type(Gtk.ShadowType.IN)
         scrolled.show_all()
         self.pack_start(scrolled, True, True, 0)
-        if settings_file:
-            self.load_from_settings(settings_file)
+        if settings_module:
+            self.load_from_settings(settings_module)
     
-    def load_from_settings(self, settings_file):
-        settings = imp.load_source('settings', settings_file)
-        [self._model.append((False, app,)) for app in settings.INSTALLED_APPS]
+    def load_from_settings(self, settings_module):
+        [self._model.append((False, app,)) for app in settings_module.INSTALLED_APPS]
     
     def get_selected(self, short_names=True):
         selected = []
